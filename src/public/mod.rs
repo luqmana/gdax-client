@@ -1,3 +1,4 @@
+use chrono::{self, DateTime};
 use hyper::client::Client as HttpClient;
 use hyper::header::UserAgent;
 use serde_json::de;
@@ -26,7 +27,7 @@ pub struct Product {
 pub struct BookEntry {
     price: f64,
     size: f64,
-    num_orders: usize
+    num_orders: u64
 }
 
 #[derive(Deserialize, Debug)]
@@ -41,6 +42,17 @@ pub struct OrderBook<T> {
     sequence: usize,
     bids: Vec<T>,
     asks: Vec<T>
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Tick {
+    trade_id: u64,
+    price: f64,
+    size: f64,
+    bid: f64,
+    ask: f64,
+    volume: f64,
+    time: DateTime<chrono::UTC>
 }
 
 pub struct Client {
@@ -95,6 +107,19 @@ impl Client {
 
     pub fn get_full_book(&self, product: &str) -> Result<OrderBook<FullBookEntry>, Error> {
         let url = format!("{}/products/{}/book?level={}", PUBLIC_API_URL, product, Level::Full as u8);
+        let mut res = self.http_client.get(&url)
+                                      .header(UserAgent("HakunaMatata/1.0".to_owned()))
+                                      .send()?;
+
+        if !res.status.is_success() {
+            return Err(Error::Api);
+        }
+
+        Ok(de::from_reader(&mut res)?)
+    }
+
+    pub fn get_product_ticker(&self, product: &str) -> Result<Tick, Error> {
+        let url = format!("{}/products/{}/ticker", PUBLIC_API_URL, product);
         let mut res = self.http_client.get(&url)
                                       .header(UserAgent("HakunaMatata/1.0".to_owned()))
                                       .send()?;

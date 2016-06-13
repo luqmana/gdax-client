@@ -1,6 +1,7 @@
 #![feature(custom_derive, plugin, question_mark)]
 #![plugin(serde_macros)]
 
+extern crate chrono;
 extern crate hyper;
 extern crate serde_json;
 
