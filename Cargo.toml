@@ -1,0 +1,10 @@
+[package]
+name = "gdax-client"
+version = "0.1.0"
+authors = ["Luqman Aden <me@luqman.ca>"]
+
+[dependencies]
+hyper = "0.9"
+serde = "*"
+serde_json = "*"
+serde_macros = "*"
