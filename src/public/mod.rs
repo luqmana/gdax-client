@@ -1,6 +1,7 @@
 use chrono::{self, DateTime};
 use hyper::client::Client as HttpClient;
 use hyper::header::UserAgent;
+use serde::Deserialize;
 use serde_json::de;
 
 use super::Error;
@@ -66,10 +67,11 @@ impl Client {
         }
     }
 
-    pub fn get_products(&self) -> Result<Vec<Product>, Error> {
-        let url = format!("{}/products", PUBLIC_API_URL);
-        let mut res = self.http_client.get(&url)
-                                      .header(UserAgent("HakunaMatata/1.0".to_owned()))
+    fn get_and_decode<T>(&self, url: &str) -> Result<T, Error>
+        where T: Deserialize {
+
+        let mut res = self.http_client.get(url)
+                                      .header(UserAgent("rust-gdax-client/0.1.0".to_owned()))
                                       .send()?;
 
         if !res.status.is_success() {
@@ -77,57 +79,34 @@ impl Client {
         }
 
         Ok(de::from_reader(&mut res)?)
+    }
+
+    pub fn get_products(&self) -> Result<Vec<Product>, Error> {
+        self.get_and_decode(&format!("{}/products", PUBLIC_API_URL))
     }
 
     pub fn get_best_order(&self, product: &str) -> Result<OrderBook<BookEntry>, Error> {
-        let url = format!("{}/products/{}/book?level={}", PUBLIC_API_URL, product, Level::Best as u8);
-        let mut res = self.http_client.get(&url)
-                                      .header(UserAgent("HakunaMatata/1.0".to_owned()))
-                                      .send()?;
-
-        if !res.status.is_success() {
-            return Err(Error::Api);
-        }
-
-        Ok(de::from_reader(&mut res)?)
+        self.get_and_decode(&format!("{}/products/{}/book?level={}",
+                                     PUBLIC_API_URL,
+                                     product,
+                                     Level::Best as u8))
     }
 
     pub fn get_top50_orders(&self, product: &str) -> Result<OrderBook<BookEntry>, Error> {
-        let url = format!("{}/products/{}/book?level={}", PUBLIC_API_URL, product, Level::Top50 as u8);
-        let mut res = self.http_client.get(&url)
-                                      .header(UserAgent("HakunaMatata/1.0".to_owned()))
-                                      .send()?;
-
-        if !res.status.is_success() {
-            return Err(Error::Api);
-        }
-
-        Ok(de::from_reader(&mut res)?)
+        self.get_and_decode(&format!("{}/products/{}/book?level={}",
+                                     PUBLIC_API_URL,
+                                     product,
+                                     Level::Top50 as u8))
     }
 
     pub fn get_full_book(&self, product: &str) -> Result<OrderBook<FullBookEntry>, Error> {
-        let url = format!("{}/products/{}/book?level={}", PUBLIC_API_URL, product, Level::Full as u8);
-        let mut res = self.http_client.get(&url)
-                                      .header(UserAgent("HakunaMatata/1.0".to_owned()))
-                                      .send()?;
-
-        if !res.status.is_success() {
-            return Err(Error::Api);
-        }
-
-        Ok(de::from_reader(&mut res)?)
+        self.get_and_decode(&format!("{}/products/{}/book?level={}",
+                                     PUBLIC_API_URL,
+                                     product,
+                                     Level::Full as u8))
     }
 
     pub fn get_product_ticker(&self, product: &str) -> Result<Tick, Error> {
-        let url = format!("{}/products/{}/ticker", PUBLIC_API_URL, product);
-        let mut res = self.http_client.get(&url)
-                                      .header(UserAgent("HakunaMatata/1.0".to_owned()))
-                                      .send()?;
-
-        if !res.status.is_success() {
-            return Err(Error::Api);
-        }
-
-        Ok(de::from_reader(&mut res)?)
+        self.get_and_decode(&format!("{}/products/{}/ticker", PUBLIC_API_URL, product))
     }
 }
