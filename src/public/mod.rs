@@ -1,4 +1,4 @@
-use chrono::{self, DateTime};
+use chrono::{DateTime, UTC};
 use hyper::client::Client as HttpClient;
 use hyper::header::UserAgent;
 use serde::{self, Deserialize};
@@ -54,12 +54,12 @@ pub struct Tick {
     bid: f64,
     ask: f64,
     volume: f64,
-    time: DateTime<chrono::UTC>
+    time: DateTime<UTC>
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Trade {
-    time: DateTime<chrono::UTC>,
+    time: DateTime<UTC>,
     trade_id: u64,
     price: f64,
     size: f64,
@@ -96,6 +96,16 @@ impl serde::Deserialize for Side {
     }
 }
 
+#[derive(Deserialize, Debug)]
+pub struct Candle {
+    time: u64,
+    low: f64,
+    high: f64,
+    open: f64,
+    close: f64,
+    volume: f64
+}
+
 pub struct Client {
     http_client: HttpClient,
 }
@@ -115,7 +125,11 @@ impl Client {
                                       .send()?;
 
         if !res.status.is_success() {
-            return Err(Error::Api);
+            #[derive(Deserialize, Debug)]
+            struct E {
+                message: String
+            }
+            return Err(Error::Api((de::from_reader(&mut res)?: E).message));
         }
 
         Ok(de::from_reader(&mut res)?)
@@ -152,5 +166,21 @@ impl Client {
 
     pub fn get_trades(&self, product: &str) -> Result<Vec<Trade>, Error> {
         self.get_and_decode(&format!("{}/products/{}/trades", PUBLIC_API_URL, product))
+    }
+
+    // XXX: Returns invalid interval?
+    pub fn get_historic_rates(&self,
+                              product: &str,
+                              start_time: DateTime<UTC>,
+                              end_time: DateTime<UTC>,
+                              granularity: u64)
+        -> Result<Vec<Candle>, Error> {
+
+        self.get_and_decode(&format!("{}/products/{}/candles?start={}&end={}&granularity={}",
+                                     PUBLIC_API_URL,
+                                     product,
+                                     start_time.to_rfc3339(),
+                                     end_time.to_rfc3339(),
+                                     granularity))
     }
 }
