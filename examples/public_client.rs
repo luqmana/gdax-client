@@ -11,4 +11,5 @@ fn main() {
              public_client.get_top50_orders("BTC-USD"),
              public_client.get_full_book("BTC-USD"));
     println!("Product Ticker: {:?}", public_client.get_product_ticker("BTC-USD"));
+    println!("Latest Trades: {:?}", public_client.get_trades("BTC-USD"));
 }

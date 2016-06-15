@@ -1,7 +1,7 @@
 use chrono::{self, DateTime};
 use hyper::client::Client as HttpClient;
 use hyper::header::UserAgent;
-use serde::Deserialize;
+use serde::{self, Deserialize};
 use serde_json::de;
 
 use super::Error;
@@ -56,6 +56,45 @@ pub struct Tick {
     time: DateTime<chrono::UTC>
 }
 
+#[derive(Deserialize, Debug)]
+pub struct Trade {
+    time: DateTime<chrono::UTC>,
+    trade_id: u64,
+    price: f64,
+    size: f64,
+    side: Side,
+}
+
+#[derive(Debug)]
+enum Side {
+    Buy,
+    Sell
+}
+
+// We manually implement Deserialize for Side here
+// because the default encoding/decoding scheme that derive
+// gives us isn't the straightforward mapping unfortunately
+impl serde::Deserialize for Side {
+    fn deserialize<D>(deserializer: &mut D) -> Result<Side, D::Error>
+        where D: serde::Deserializer {
+
+        struct SideVisitor;
+        impl serde::de::Visitor for SideVisitor {
+            type Value = Side;
+
+            fn visit_str<E>(&mut self, v: &str) -> Result<Self::Value, E>
+                where E: serde::Error {
+                match &*v.to_lowercase() {
+                    "buy" => Ok(Side::Buy),
+                    "sell" => Ok(Side::Sell),
+                    _ => Err(E::invalid_value("side must be either `buy` or `sell`"))
+                }
+            }
+        }
+        deserializer.deserialize(SideVisitor)
+    }
+}
+
 pub struct Client {
     http_client: HttpClient,
 }
@@ -108,5 +147,9 @@ impl Client {
 
     pub fn get_product_ticker(&self, product: &str) -> Result<Tick, Error> {
         self.get_and_decode(&format!("{}/products/{}/ticker", PUBLIC_API_URL, product))
+    }
+
+    pub fn get_trades(&self, product: &str) -> Result<Vec<Trade>, Error> {
+        self.get_and_decode(&format!("{}/products/{}/trades", PUBLIC_API_URL, product))
     }
 }
