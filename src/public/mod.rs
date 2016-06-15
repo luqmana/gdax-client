@@ -106,6 +106,14 @@ pub struct Candle {
     volume: f64
 }
 
+#[derive(Deserialize, Debug)]
+pub struct Stats {
+    open: f64,
+    high: f64,
+    low: f64,
+    volume: f64
+}
+
 pub struct Client {
     http_client: HttpClient,
 }
@@ -182,5 +190,9 @@ impl Client {
                                      start_time.to_rfc3339(),
                                      end_time.to_rfc3339(),
                                      granularity))
+    }
+
+    pub fn get_24hr_stats(&self, product: &str) -> Result<Stats, Error> {
+        self.get_and_decode(&format!("{}/products/{}/stats", PUBLIC_API_URL, product))
     }
 }
