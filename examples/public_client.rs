@@ -21,4 +21,6 @@ fn main() {
                                               chrono::UTC.ymd(2016, 6, 10).and_hms(12, 0, 0),
                                               30 * 60));
     println!("24Hr stats: {:?}", public_client.get_24hr_stats("BTC-USD"));
+    println!("Currencies: {:?}", public_client.get_currencies());
+    println!("Time: {:?}", public_client.get_time());
 }

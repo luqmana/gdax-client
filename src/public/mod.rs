@@ -114,6 +114,19 @@ pub struct Stats {
     volume: f64
 }
 
+#[derive(Deserialize, Debug)]
+pub struct Currency {
+    id: String,
+    name: String,
+    min_size: f64
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Time {
+    iso: DateTime<UTC>,
+    epoch: f64
+}
+
 pub struct Client {
     http_client: HttpClient,
 }
@@ -194,5 +207,13 @@ impl Client {
 
     pub fn get_24hr_stats(&self, product: &str) -> Result<Stats, Error> {
         self.get_and_decode(&format!("{}/products/{}/stats", PUBLIC_API_URL, product))
+    }
+
+    pub fn get_currencies(&self) -> Result<Vec<Currency>, Error> {
+        self.get_and_decode(&format!("{}/currencies", PUBLIC_API_URL))
+    }
+
+    pub fn get_time(&self) -> Result<Time, Error> {
+        self.get_and_decode(&format!("{}/time", PUBLIC_API_URL))
     }
 }
