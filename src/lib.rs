@@ -5,6 +5,7 @@ extern crate chrono;
 extern crate hyper;
 extern crate serde;
 extern crate serde_json;
+extern crate uuid;
 
 pub mod public;
 

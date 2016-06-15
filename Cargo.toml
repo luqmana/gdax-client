@@ -12,3 +12,7 @@ serde_macros = "*"
 [dependencies.chrono]
 version = "0.2"
 features = ["serde"]
+
+[dependencies.uuid]
+version = "0.2"
+features = ["serde"]

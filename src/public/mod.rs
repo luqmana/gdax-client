@@ -3,6 +3,7 @@ use hyper::client::Client as HttpClient;
 use hyper::header::UserAgent;
 use serde::{self, Deserialize};
 use serde_json::de;
+use uuid::Uuid;
 
 use super::Error;
 
@@ -35,7 +36,7 @@ pub struct BookEntry {
 pub struct FullBookEntry {
     price: f64,
     size: f64,
-    order_id: String
+    order_id: Uuid
 }
 
 #[derive(Deserialize, Debug)]
