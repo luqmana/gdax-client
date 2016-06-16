@@ -84,6 +84,49 @@ impl serde::Deserialize for EntryType {
     }
 }
 
+#[derive(Deserialize, Debug)]
+pub struct Hold {
+    pub id: Uuid,
+    pub account_id: Uuid,
+    pub created_at: DateTime<UTC>,
+    pub updated_at: DateTime<UTC>,
+    pub amount: f64,
+    #[serde(rename = "type")]
+    pub hold_type: HoldType,
+    #[serde(rename = "ref")]
+    pub ref_id: Uuid
+}
+
+#[derive(Debug)]
+pub enum HoldType {
+    Order,
+    Transfer
+}
+
+// We manually implement Deserialize for HoldType here
+// because the default encoding/decoding scheme that derive
+// gives us isn't the straightforward mapping unfortunately
+impl serde::Deserialize for HoldType {
+    fn deserialize<D>(deserializer: &mut D) -> Result<HoldType, D::Error>
+        where D: serde::Deserializer {
+
+        struct HoldTypeVisitor;
+        impl serde::de::Visitor for HoldTypeVisitor {
+            type Value = HoldType;
+
+            fn visit_str<E>(&mut self, v: &str) -> Result<Self::Value, E>
+                where E: serde::Error {
+                match &*v.to_lowercase() {
+                    "order" => Ok(HoldType::Order),
+                    "transfer" => Ok(HoldType::Transfer),
+                    _ => Err(E::invalid_value("hold type must be either `order` or `transfer`"))
+                }
+            }
+        }
+        deserializer.deserialize(HoldTypeVisitor)
+    }
+}
+
 impl Client {
     pub fn new(key: &str, secret: &str, passphrase: &str) -> Client {
         Client {
@@ -149,5 +192,9 @@ impl Client {
 
     pub fn get_account_history(&self, id: Uuid) -> Result<Ledger, Error> {
         self.get_and_decode(&format!("/accounts/{}/ledger", id))
+    }
+
+    pub fn get_account_holds(&self, id: Uuid) -> Result<Vec<Hold>, Error> {
+        self.get_and_decode(&format!("/accounts/{}/holds", id))
     }
 }

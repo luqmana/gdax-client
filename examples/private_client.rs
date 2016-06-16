@@ -18,6 +18,7 @@ fn main() {
 
         if let Some(btc_account) = accounts.iter().find(|&x| x.currency == "BTC") {
             println!("Account History: {:?}", private_client.get_account_history(btc_account.id));
+            println!("Account Holds: {:?}", private_client.get_account_holds(btc_account.id));
         }
     }
 }
