@@ -1,10 +1,11 @@
 use base64;
+use chrono::{DateTime, UTC};
 use crypto::hmac::Hmac;
 use crypto::mac::Mac;
 use crypto::sha2::Sha256;
 use hyper::client::Client as HttpClient;
 use hyper::header::{Headers, UserAgent};
-use serde::Deserialize;
+use serde::{self, Deserialize};
 use serde_json::de;
 use time::get_time;
 use uuid::Uuid;
@@ -27,6 +28,60 @@ pub struct Account {
     pub hold: f64,
     pub available: f64,
     pub currency: String
+}
+
+pub type Ledger = Vec<LedgerEntry>;
+
+#[derive(Deserialize, Debug)]
+pub struct LedgerEntry {
+    pub id: u64,
+    pub created_at: DateTime<UTC>,
+    pub amount: f64,
+    pub balance: f64,
+    #[serde(rename = "type")]
+    pub entry_type: EntryType,
+    pub details: Option<EntryDetails>
+}
+
+#[derive(Deserialize, Debug)]
+pub struct EntryDetails {
+    pub order_id: Option<Uuid>,
+    pub trade_id: Option<u64>,
+    pub product_id: Option<String>,
+    pub transfer_id: Option<Uuid>,
+    pub transfer_type: Option<String>
+}
+
+#[derive(Debug)]
+pub enum EntryType {
+    Fee,
+    Match,
+    Transfer
+}
+
+// We manually implement Deserialize for EntryType here
+// because the default encoding/decoding scheme that derive
+// gives us isn't the straightforward mapping unfortunately
+impl serde::Deserialize for EntryType {
+    fn deserialize<D>(deserializer: &mut D) -> Result<EntryType, D::Error>
+        where D: serde::Deserializer {
+
+        struct EntryTypeVisitor;
+        impl serde::de::Visitor for EntryTypeVisitor {
+            type Value = EntryType;
+
+            fn visit_str<E>(&mut self, v: &str) -> Result<Self::Value, E>
+                where E: serde::Error {
+                match &*v.to_lowercase() {
+                    "fee" => Ok(EntryType::Fee),
+                    "match" => Ok(EntryType::Match),
+                    "transfer" => Ok(EntryType::Transfer),
+                    _ => Err(E::invalid_value("entry type must be either `fee`, `match` or `transfer`"))
+                }
+            }
+        }
+        deserializer.deserialize(EntryTypeVisitor)
+    }
 }
 
 impl Client {
@@ -90,5 +145,9 @@ impl Client {
 
     pub fn get_account(&self, id: Uuid) -> Result<Account, Error> {
         self.get_and_decode(&format!("/accounts/{}", id))
+    }
+
+    pub fn get_account_history(&self, id: Uuid) -> Result<Ledger, Error> {
+        self.get_and_decode(&format!("/accounts/{}/ledger", id))
     }
 }

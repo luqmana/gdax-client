@@ -15,5 +15,9 @@ fn main() {
         println!("Account [{}]: {:?}",
                  accounts[0].id,
                  private_client.get_account(accounts[0].id));
+
+        if let Some(btc_account) = accounts.iter().find(|&x| x.currency == "BTC") {
+            println!("Account History: {:?}", private_client.get_account_history(btc_account.id));
+        }
     }
 }
