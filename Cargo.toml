@@ -19,3 +19,6 @@ features = ["serde"]
 [dependencies.uuid]
 version = "0.2"
 features = ["serde"]
+
+[dev-dependencies]
+env_logger = "0.3"

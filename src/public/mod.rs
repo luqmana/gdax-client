@@ -1,11 +1,12 @@
 use chrono::{DateTime, UTC};
 use hyper::client::Client as HttpClient;
 use hyper::header::UserAgent;
-use serde::{self, Deserialize};
+use serde::Deserialize;
 use serde_json::de;
 use uuid::Uuid;
 
 use super::Error;
+use super::Side;
 
 const PUBLIC_API_URL: &'static str = "https://api.gdax.com";
 
@@ -66,36 +67,6 @@ pub struct Trade {
     pub side: Side,
 }
 
-#[derive(Debug)]
-pub enum Side {
-    Buy,
-    Sell
-}
-
-// We manually implement Deserialize for Side here
-// because the default encoding/decoding scheme that derive
-// gives us isn't the straightforward mapping unfortunately
-impl serde::Deserialize for Side {
-    fn deserialize<D>(deserializer: &mut D) -> Result<Side, D::Error>
-        where D: serde::Deserializer {
-
-        struct SideVisitor;
-        impl serde::de::Visitor for SideVisitor {
-            type Value = Side;
-
-            fn visit_str<E>(&mut self, v: &str) -> Result<Self::Value, E>
-                where E: serde::Error {
-                match &*v.to_lowercase() {
-                    "buy" => Ok(Side::Buy),
-                    "sell" => Ok(Side::Sell),
-                    _ => Err(E::invalid_value("side must be either `buy` or `sell`"))
-                }
-            }
-        }
-        deserializer.deserialize(SideVisitor)
-    }
-}
-
 #[derive(Deserialize, Debug)]
 pub struct Candle {
     pub time: u64,
@@ -139,18 +110,15 @@ impl Client {
     }
 
     fn get_and_decode<T>(&self, url: &str) -> Result<T, Error>
-        where T: Deserialize {
+        where T: Deserialize
+    {
 
         let mut res = self.http_client.get(url)
                                       .header(UserAgent("rust-gdax-client/0.1.0".to_owned()))
                                       .send()?;
 
         if !res.status.is_success() {
-            #[derive(Deserialize, Debug)]
-            struct E {
-                message: String
-            }
-            return Err(Error::Api((de::from_reader(&mut res)?: E).message));
+            return Err(Error::Api(de::from_reader(&mut res)?));
         }
 
         Ok(de::from_reader(&mut res)?)

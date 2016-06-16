@@ -1,4 +1,4 @@
-#![feature(custom_derive, plugin, type_ascription, question_mark)]
+#![feature(custom_derive, plugin, question_mark)]
 #![plugin(serde_macros)]
 
 extern crate base64;
@@ -16,9 +16,16 @@ pub mod private;
 pub use public::Client as PublicClient;
 pub use private::Client as PrivateClient;
 
+pub use private::Order;
+
+#[derive(Debug, Deserialize)]
+pub struct ApiError {
+    message: String
+}
+
 #[derive(Debug)]
 pub enum Error {
-    Api(String),
+    Api(ApiError),
     Http(hyper::Error),
     InvalidSecretKey,
     Json(serde_json::Error),
@@ -42,3 +49,49 @@ impl std::convert::From<serde_json::Error> for Error {
         Error::Json(err)
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+pub enum Side {
+    Buy,
+    Sell
+}
+
+// We manually implement Serialize for Side here
+// because the default encoding/decoding scheme that derive
+// gives us isn't the straightforward mapping unfortunately
+impl serde::Serialize for Side {
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+        where S: serde::Serializer
+    {
+        match *self {
+            Side::Buy => serializer.serialize_str("buy"),
+            Side::Sell => serializer.serialize_str("sell")
+        }
+    }
+}
+
+// We manually implement Deserialize for Side here
+// because the default encoding/decoding scheme that derive
+// gives us isn't the straightforward mapping unfortunately
+impl serde::Deserialize for Side {
+    fn deserialize<D>(deserializer: &mut D) -> Result<Side, D::Error>
+        where D: serde::Deserializer
+    {
+
+        struct SideVisitor;
+        impl serde::de::Visitor for SideVisitor {
+            type Value = Side;
+
+            fn visit_str<E>(&mut self, v: &str) -> Result<Self::Value, E>
+                where E: serde::Error {
+                match &*v.to_lowercase() {
+                    "buy" => Ok(Side::Buy),
+                    "sell" => Ok(Side::Sell),
+                    _ => Err(E::invalid_value("side must be either `buy` or `sell`"))
+                }
+            }
+        }
+        deserializer.deserialize(SideVisitor)
+    }
+}
+

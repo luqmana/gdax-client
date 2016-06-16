@@ -4,13 +4,15 @@ use crypto::hmac::Hmac;
 use crypto::mac::Mac;
 use crypto::sha2::Sha256;
 use hyper::client::Client as HttpClient;
-use hyper::header::{Headers, UserAgent};
-use serde::{self, Deserialize};
-use serde_json::de;
+use hyper::header::{Accept, ContentType, Headers, qitem, UserAgent};
+use hyper::mime::{Mime, TopLevel, SubLevel};
+use serde::{self, Deserialize, Serialize};
+use serde_json::{de, ser};
 use time::get_time;
 use uuid::Uuid;
 
 use super::Error;
+use super::Side;
 
 const PRIVATE_API_URL: &'static str = "https://api.gdax.com";
 
@@ -127,6 +129,60 @@ impl serde::Deserialize for HoldType {
     }
 }
 
+pub type OrderId = Uuid;
+
+#[derive(Debug)]
+pub enum Order {
+    Limit {
+        side: Side,
+        product_id: String,
+        price: f64,
+        size: f64
+    }
+}
+
+impl Order {
+    pub fn limit(side: Side, product_id: &str, size: f64, price: f64) -> Order {
+        Order::Limit {
+            side: side,
+            product_id: product_id.to_owned(),
+            price: price,
+            size: size
+        }
+    }
+}
+
+// We manually implement Serialize for Order since
+// each variant needs to be encoded slightly differently
+impl Serialize for Order {
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+        where S: serde::Serializer
+    {
+        match *self {
+            Order::Limit { side, ref product_id, price, size } => {
+                // We create a struct representing the JSON
+                // and have Serialize auto derived for that
+                #[derive(Serialize)]
+                struct LimitOrder<'a> {
+                    #[serde(rename = "type")]
+                    t: &'static str,
+                    side: Side,
+                    product_id: &'a str,
+                    price: f64,
+                    size: f64
+                }
+                LimitOrder {
+                    t: "limit",
+                    side: side,
+                    product_id: product_id,
+                    price: price,
+                    size: size
+                }.serialize(serializer)
+            }
+        }
+    }
+}
+
 impl Client {
     pub fn new(key: &str, secret: &str, passphrase: &str) -> Client {
         Client {
@@ -153,30 +209,50 @@ impl Client {
         Ok(base64::encode(hmac.result().code()))
     }
 
-    fn get_and_decode<T>(&self, path: &str) -> Result<T, Error>
-        where T: Deserialize {
-
+    fn get_headers(&self, path: &str, body: &str, method: &str) -> Result<Headers, Error> {
         let timestamp = get_time().sec.to_string();
-        let signature = self.signature(path, "", &timestamp, "GET")?;
+        let signature = self.signature(path, body, &timestamp, method)?;
 
         let mut headers = Headers::new();
+        headers.set(Accept(vec![qitem(Mime(TopLevel::Application, SubLevel::Json, vec![]))]));
         headers.set(UserAgent("rust-gdax-client/0.1.0".to_owned()));
         headers.set_raw("CB-ACCESS-KEY", vec![self.key.clone().into_bytes()]);
         headers.set_raw("CB-ACCESS-SIGN", vec![signature.into_bytes()]);
         headers.set_raw("CB-ACCESS-PASSPHRASE", vec![self.passphrase.clone().into_bytes()]);
         headers.set_raw("CB-ACCESS-TIMESTAMP", vec![timestamp.into_bytes()]);
 
+        Ok(headers)
+    }
+
+    fn get_and_decode<T>(&self, path: &str) -> Result<T, Error>
+        where T: Deserialize
+    {
+        let headers = self.get_headers(path, "", "GET")?;
         let url = format!("{}{}", PRIVATE_API_URL, path);
         let mut res = self.http_client.get(&url)
                                       .headers(headers)
                                       .send()?;
 
         if !res.status.is_success() {
-            #[derive(Deserialize, Debug)]
-            struct E {
-                message: String
-            }
-            return Err(Error::Api((de::from_reader(&mut res)?: E).message));
+            return Err(Error::Api(de::from_reader(&mut res)?));
+        }
+
+        Ok(de::from_reader(&mut res)?)
+    }
+
+    fn post_and_decode<T>(&self, path: &str, body: &str) -> Result<T, Error>
+        where T: Deserialize
+    {
+        let headers = self.get_headers(path, body, "POST")?;
+        let url = format!("{}{}", PRIVATE_API_URL, path);
+        let mut res = self.http_client.post(&url)
+                                      .headers(headers)
+                                      .header(ContentType::json())
+                                      .body(body)
+                                      .send()?;
+
+        if !res.status.is_success() {
+            return Err(Error::Api(de::from_reader(&mut res)?));
         }
 
         Ok(de::from_reader(&mut res)?)
@@ -196,5 +272,10 @@ impl Client {
 
     pub fn get_account_holds(&self, id: Uuid) -> Result<Vec<Hold>, Error> {
         self.get_and_decode(&format!("/accounts/{}/holds", id))
+    }
+
+    pub fn post_order(&self, order: &Order) -> Result<OrderId, Error> {
+        let body = ser::to_string(order)?;
+        self.post_and_decode("/orders", &body)
     }
 }
