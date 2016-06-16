@@ -17,57 +17,57 @@ pub enum Level {
 
 #[derive(Deserialize, Debug)]
 pub struct Product {
-    id: String,
-    base_currency: String,
-    quote_currency: String,
-    base_min_size: f64,
-    base_max_size: f64,
-    quote_increment: f64
+    pub id: String,
+    pub base_currency: String,
+    pub quote_currency: String,
+    pub base_min_size: f64,
+    pub base_max_size: f64,
+    pub quote_increment: f64
 }
 
 #[derive(Deserialize, Debug)]
 pub struct BookEntry {
-    price: f64,
-    size: f64,
-    num_orders: u64
+    pub price: f64,
+    pub size: f64,
+    pub num_orders: u64
 }
 
 #[derive(Deserialize, Debug)]
 pub struct FullBookEntry {
-    price: f64,
-    size: f64,
-    order_id: Uuid
+    pub price: f64,
+    pub size: f64,
+    pub order_id: Uuid
 }
 
 #[derive(Deserialize, Debug)]
 pub struct OrderBook<T> {
-    sequence: usize,
-    bids: Vec<T>,
-    asks: Vec<T>
+    pub sequence: usize,
+    pub bids: Vec<T>,
+    pub asks: Vec<T>
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Tick {
-    trade_id: u64,
-    price: f64,
-    size: f64,
-    bid: f64,
-    ask: f64,
-    volume: f64,
-    time: DateTime<UTC>
+    pub trade_id: u64,
+    pub price: f64,
+    pub size: f64,
+    pub bid: f64,
+    pub ask: f64,
+    pub volume: f64,
+    pub time: DateTime<UTC>
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Trade {
-    time: DateTime<UTC>,
-    trade_id: u64,
-    price: f64,
-    size: f64,
-    side: Side,
+    pub time: DateTime<UTC>,
+    pub trade_id: u64,
+    pub price: f64,
+    pub size: f64,
+    pub side: Side,
 }
 
 #[derive(Debug)]
-enum Side {
+pub enum Side {
     Buy,
     Sell
 }
@@ -98,33 +98,33 @@ impl serde::Deserialize for Side {
 
 #[derive(Deserialize, Debug)]
 pub struct Candle {
-    time: u64,
-    low: f64,
-    high: f64,
-    open: f64,
-    close: f64,
-    volume: f64
+    pub time: u64,
+    pub low: f64,
+    pub high: f64,
+    pub open: f64,
+    pub close: f64,
+    pub volume: f64
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Stats {
-    open: f64,
-    high: f64,
-    low: f64,
-    volume: f64
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub volume: f64
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Currency {
-    id: String,
-    name: String,
-    min_size: f64
+    pub id: String,
+    pub name: String,
+    pub min_size: f64
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Time {
-    iso: DateTime<UTC>,
-    epoch: f64
+    pub iso: DateTime<UTC>,
+    pub epoch: f64
 }
 
 pub struct Client {
