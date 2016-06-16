@@ -4,10 +4,13 @@ version = "0.1.0"
 authors = ["Luqman Aden <me@luqman.ca>"]
 
 [dependencies]
+base64 = "0.2"
 hyper = "0.9"
+rust-crypto = "0.2"
 serde = "*"
 serde_json = "*"
 serde_macros = "*"
+time = "0.1"
 
 [dependencies.chrono]
 version = "0.2"
