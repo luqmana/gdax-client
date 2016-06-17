@@ -364,7 +364,9 @@ impl Client {
         Ok(de::from_reader(&mut res)?)
     }
 
-    fn delete(&self, path: &str) -> Result<(), Error> {
+    fn delete_and_decode<T>(&self, path: &str) -> Result<T, Error>
+        where T: Deserialize
+    {
         let headers = self.get_headers(path, "", "DELETE")?;
         let url = format!("{}{}", PRIVATE_API_URL, path);
         let mut res = self.http_client.delete(&url)
@@ -375,7 +377,7 @@ impl Client {
             return Err(Error::Api(de::from_reader(&mut res)?));
         }
 
-        Ok(())
+        Ok(de::from_reader(&mut res)?)
     }
 
     pub fn get_accounts(&self) -> Result<Vec<Account>, Error> {
@@ -400,6 +402,14 @@ impl Client {
     }
 
     pub fn cancel_order(&self, order_id: OrderId) -> Result<(), Error> {
-        self.delete(&format!("/order/{}", order_id))
+        self.delete_and_decode(&format!("/order/{}", order_id))
+    }
+
+    pub fn cancel_all_orders(&self, product_id: Option<&str>) -> Result<Vec<OrderId>, Error> {
+        if let Some(product_id) = product_id {
+            self.delete_and_decode(&format!("/orders?product_id={}", product_id))
+        } else {
+            self.delete_and_decode("/orders")
+        }
     }
 }
