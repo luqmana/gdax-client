@@ -131,6 +131,12 @@ impl serde::Deserialize for HoldType {
 
 pub type OrderId = Uuid;
 
+#[derive(Clone, Copy, Debug)]
+pub enum SizeOrFunds {
+    Size(f64),
+    Funds(f64)
+}
+
 #[derive(Debug)]
 pub enum Order {
     Limit {
@@ -138,6 +144,11 @@ pub enum Order {
         product_id: String,
         price: f64,
         size: f64
+    },
+    Market {
+        side: Side,
+        product_id: String,
+        size_or_funds: SizeOrFunds,
     }
 }
 
@@ -148,6 +159,14 @@ impl Order {
             product_id: product_id.to_owned(),
             price: price,
             size: size
+        }
+    }
+
+    pub fn market(side: Side, product_id: &str, size_or_funds: SizeOrFunds) -> Order {
+        Order::Market {
+            side: side,
+            product_id: product_id.to_owned(),
+            size_or_funds: size_or_funds
         }
     }
 }
@@ -177,6 +196,40 @@ impl Serialize for Order {
                     product_id: product_id,
                     price: price,
                     size: size
+                }.serialize(serializer)
+            }
+
+            Order::Market { side, ref product_id, size_or_funds: SizeOrFunds::Size(size) } => {
+                #[derive(Serialize)]
+                struct MarketOrder<'a> {
+                    #[serde(rename = "type")]
+                    t: &'static str,
+                    side: Side,
+                    product_id: &'a str,
+                    size: f64
+                }
+                MarketOrder {
+                    t: "market",
+                    side: side,
+                    product_id: product_id,
+                    size: size
+                }.serialize(serializer)
+            }
+
+            Order::Market { side, ref product_id, size_or_funds: SizeOrFunds::Funds(funds) } => {
+                #[derive(Serialize)]
+                struct MarketOrder<'a> {
+                    #[serde(rename = "type")]
+                    t: &'static str,
+                    side: Side,
+                    product_id: &'a str,
+                    funds: f64
+                }
+                MarketOrder {
+                    t: "market",
+                    side: side,
+                    product_id: product_id,
+                    funds: funds
                 }.serialize(serializer)
             }
         }

@@ -1,7 +1,7 @@
 extern crate env_logger;
 extern crate gdax_client;
 
-use gdax_client::{Order, PrivateClient, Side};
+use gdax_client::{Order, PrivateClient, Side, SizeOrFunds};
 
 const CB_KEY: &'static str = env!("CB_KEY");
 const CB_SECRET: &'static str = env!("CB_SECRET");
@@ -27,4 +27,10 @@ fn main() {
 
     let order = Order::limit(Side::Buy, "BTC-CAD", 1.01, 1.01);
     println!("Posting limit order: {:?} {:?}", order, private_client.post_order(&order));
+
+    let order = Order::market(Side::Buy, "BTC-CAD", SizeOrFunds::Funds(10000.));
+    println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
+
+    let order = Order::market(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1000.));
+    println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
 }

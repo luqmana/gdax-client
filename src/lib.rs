@@ -17,6 +17,7 @@ pub use public::Client as PublicClient;
 pub use private::Client as PrivateClient;
 
 pub use private::Order;
+pub use private::SizeOrFunds::{self, Funds, Size};
 
 #[derive(Debug, Deserialize)]
 pub struct ApiError {
