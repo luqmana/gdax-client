@@ -33,4 +33,7 @@ fn main() {
 
     let order = Order::market(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1000.));
     println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
+
+    let order = Order::stop(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1.01), 1.01);
+    println!("Posting stop order: {:?} {:?}", order, private_client.post_order(&order));
 }

@@ -149,6 +149,12 @@ pub enum Order {
         side: Side,
         product_id: String,
         size_or_funds: SizeOrFunds,
+    },
+    Stop {
+        side: Side,
+        product_id: String,
+        price: f64,
+        size_or_funds: SizeOrFunds
     }
 }
 
@@ -167,6 +173,15 @@ impl Order {
             side: side,
             product_id: product_id.to_owned(),
             size_or_funds: size_or_funds
+        }
+    }
+
+    pub fn stop(side: Side, product_id: &str, size_or_funds: SizeOrFunds, price: f64) -> Order {
+        Order::Stop {
+            side: side,
+            product_id: product_id.to_owned(),
+            size_or_funds: size_or_funds,
+            price: price
         }
     }
 }
@@ -229,6 +244,44 @@ impl Serialize for Order {
                     t: "market",
                     side: side,
                     product_id: product_id,
+                    funds: funds
+                }.serialize(serializer)
+            }
+
+            Order::Stop { side, ref product_id, price, size_or_funds: SizeOrFunds::Size(size) } => {
+                #[derive(Serialize)]
+                struct StopOrder<'a> {
+                    #[serde(rename = "type")]
+                    t: &'static str,
+                    side: Side,
+                    product_id: &'a str,
+                    price: f64,
+                    size: f64
+                }
+                StopOrder {
+                    t: "stop",
+                    side: side,
+                    product_id: product_id,
+                    price: price,
+                    size: size
+                }.serialize(serializer)
+            }
+
+            Order::Stop { side, ref product_id, price, size_or_funds: SizeOrFunds::Funds(funds) } => {
+                #[derive(Serialize)]
+                struct StopOrder<'a> {
+                    #[serde(rename = "type")]
+                    t: &'static str,
+                    side: Side,
+                    product_id: &'a str,
+                    price: f64,
+                    funds: f64
+                }
+                StopOrder {
+                    t: "stop",
+                    side: side,
+                    product_id: product_id,
+                    price: price,
                     funds: funds
                 }.serialize(serializer)
             }
