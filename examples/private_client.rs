@@ -1,5 +1,6 @@
 extern crate env_logger;
 extern crate gdax_client;
+extern crate uuid;
 
 use gdax_client::{Order, PrivateClient, Side, SizeOrFunds};
 
@@ -36,4 +37,6 @@ fn main() {
 
     let order = Order::stop(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1.01), 1.01);
     println!("Posting stop order: {:?} {:?}", order, private_client.post_order(&order));
+
+    println!("Delete bogus order: {:?}", private_client.cancel_order(uuid::Uuid::new_v4()));
 }

@@ -364,6 +364,20 @@ impl Client {
         Ok(de::from_reader(&mut res)?)
     }
 
+    fn delete(&self, path: &str) -> Result<(), Error> {
+        let headers = self.get_headers(path, "", "DELETE")?;
+        let url = format!("{}{}", PRIVATE_API_URL, path);
+        let mut res = self.http_client.delete(&url)
+                                      .headers(headers)
+                                      .send()?;
+
+        if !res.status.is_success() {
+            return Err(Error::Api(de::from_reader(&mut res)?));
+        }
+
+        Ok(())
+    }
+
     pub fn get_accounts(&self) -> Result<Vec<Account>, Error> {
         self.get_and_decode("/accounts")
     }
@@ -383,5 +397,9 @@ impl Client {
     pub fn post_order(&self, order: &Order) -> Result<OrderId, Error> {
         let body = ser::to_string(order)?;
         self.post_and_decode("/orders", &body)
+    }
+
+    pub fn cancel_order(&self, order_id: OrderId) -> Result<(), Error> {
+        self.delete(&format!("/order/{}", order_id))
     }
 }
