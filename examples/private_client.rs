@@ -2,7 +2,8 @@ extern crate env_logger;
 extern crate gdax_client;
 extern crate uuid;
 
-use gdax_client::{Order, PrivateClient, Side, SizeOrFunds};
+use gdax_client::{NewOrder, PrivateClient, Side, SizeOrFunds};
+use uuid::Uuid;
 
 const CB_KEY: &'static str = env!("CB_KEY");
 const CB_SECRET: &'static str = env!("CB_SECRET");
@@ -26,19 +27,23 @@ fn main() {
         }
     }
 
-    let order = Order::limit(Side::Buy, "BTC-CAD", 1.01, 1.01);
+    let order = NewOrder::limit(Side::Buy, "BTC-CAD", 1.01, 1.01);
     println!("Posting limit order: {:?} {:?}", order, private_client.post_order(&order));
 
-    let order = Order::market(Side::Buy, "BTC-CAD", SizeOrFunds::Funds(10000.));
+    let order = NewOrder::market(Side::Buy, "BTC-CAD", SizeOrFunds::Funds(10000.));
     println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
 
-    let order = Order::market(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1000.));
+    let order = NewOrder::market(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1000.));
     println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
 
-    let order = Order::stop(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1.01), 1.01);
+    let order = NewOrder::stop(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1.01), 1.01);
     println!("Posting stop order: {:?} {:?}", order, private_client.post_order(&order));
 
-    println!("Cancel bogus order: {:?}", private_client.cancel_order(uuid::Uuid::new_v4()));
+    println!("All Open Orders: {:?}", private_client.get_orders());
+
+    println!("Bogus order: {:?}", private_client.get_order(Uuid::new_v4()));
+
+    println!("Cancel bogus order: {:?}", private_client.cancel_order(Uuid::new_v4()));
 
     println!("Cancel all orders: {:?}", private_client.cancel_all_orders(None));
 }

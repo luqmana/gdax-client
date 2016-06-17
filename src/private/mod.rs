@@ -138,7 +138,7 @@ pub enum SizeOrFunds {
 }
 
 #[derive(Debug)]
-pub enum Order {
+pub enum NewOrder {
     Limit {
         side: Side,
         product_id: String,
@@ -158,9 +158,9 @@ pub enum Order {
     }
 }
 
-impl Order {
-    pub fn limit(side: Side, product_id: &str, size: f64, price: f64) -> Order {
-        Order::Limit {
+impl NewOrder {
+    pub fn limit(side: Side, product_id: &str, size: f64, price: f64) -> NewOrder {
+        NewOrder::Limit {
             side: side,
             product_id: product_id.to_owned(),
             price: price,
@@ -168,16 +168,16 @@ impl Order {
         }
     }
 
-    pub fn market(side: Side, product_id: &str, size_or_funds: SizeOrFunds) -> Order {
-        Order::Market {
+    pub fn market(side: Side, product_id: &str, size_or_funds: SizeOrFunds) -> NewOrder {
+        NewOrder::Market {
             side: side,
             product_id: product_id.to_owned(),
             size_or_funds: size_or_funds
         }
     }
 
-    pub fn stop(side: Side, product_id: &str, size_or_funds: SizeOrFunds, price: f64) -> Order {
-        Order::Stop {
+    pub fn stop(side: Side, product_id: &str, size_or_funds: SizeOrFunds, price: f64) -> NewOrder {
+        NewOrder::Stop {
             side: side,
             product_id: product_id.to_owned(),
             size_or_funds: size_or_funds,
@@ -186,14 +186,14 @@ impl Order {
     }
 }
 
-// We manually implement Serialize for Order since
+// We manually implement Serialize for NewOrder since
 // each variant needs to be encoded slightly differently
-impl Serialize for Order {
+impl Serialize for NewOrder {
     fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
         where S: serde::Serializer
     {
         match *self {
-            Order::Limit { side, ref product_id, price, size } => {
+            NewOrder::Limit { side, ref product_id, price, size } => {
                 // We create a struct representing the JSON
                 // and have Serialize auto derived for that
                 #[derive(Serialize)]
@@ -214,7 +214,7 @@ impl Serialize for Order {
                 }.serialize(serializer)
             }
 
-            Order::Market { side, ref product_id, size_or_funds: SizeOrFunds::Size(size) } => {
+            NewOrder::Market { side, ref product_id, size_or_funds: SizeOrFunds::Size(size) } => {
                 #[derive(Serialize)]
                 struct MarketOrder<'a> {
                     #[serde(rename = "type")]
@@ -231,7 +231,7 @@ impl Serialize for Order {
                 }.serialize(serializer)
             }
 
-            Order::Market { side, ref product_id, size_or_funds: SizeOrFunds::Funds(funds) } => {
+            NewOrder::Market { side, ref product_id, size_or_funds: SizeOrFunds::Funds(funds) } => {
                 #[derive(Serialize)]
                 struct MarketOrder<'a> {
                     #[serde(rename = "type")]
@@ -248,7 +248,7 @@ impl Serialize for Order {
                 }.serialize(serializer)
             }
 
-            Order::Stop { side, ref product_id, price, size_or_funds: SizeOrFunds::Size(size) } => {
+            NewOrder::Stop { side, ref product_id, price, size_or_funds: SizeOrFunds::Size(size) } => {
                 #[derive(Serialize)]
                 struct StopOrder<'a> {
                     #[serde(rename = "type")]
@@ -267,7 +267,7 @@ impl Serialize for Order {
                 }.serialize(serializer)
             }
 
-            Order::Stop { side, ref product_id, price, size_or_funds: SizeOrFunds::Funds(funds) } => {
+            NewOrder::Stop { side, ref product_id, price, size_or_funds: SizeOrFunds::Funds(funds) } => {
                 #[derive(Serialize)]
                 struct StopOrder<'a> {
                     #[serde(rename = "type")]
@@ -287,6 +287,37 @@ impl Serialize for Order {
             }
         }
     }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct OpenOrder {
+    id: OrderId,
+    size: f64,
+    price: f64,
+    product_id: String,
+    status: String,
+    filled_size: f64,
+    executed_value: f64,
+    fill_fees: f64,
+    settled: bool,
+    created_at: DateTime<UTC>
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Order {
+    id: OrderId,
+    size: f64,
+    price: f64,
+    done_reason: String,
+    status: String,
+    settled: bool,
+    filled_size: f64,
+    executed_value: f64,
+    product_id: String,
+    fill_fees: f64,
+    side: Side,
+    created_at: DateTime<UTC>,
+    done_at: DateTime<UTC>
 }
 
 impl Client {
@@ -396,7 +427,7 @@ impl Client {
         self.get_and_decode(&format!("/accounts/{}/holds", id))
     }
 
-    pub fn post_order(&self, order: &Order) -> Result<OrderId, Error> {
+    pub fn post_order(&self, order: &NewOrder) -> Result<OrderId, Error> {
         let body = ser::to_string(order)?;
         self.post_and_decode("/orders", &body)
     }
@@ -411,5 +442,28 @@ impl Client {
         } else {
             self.delete_and_decode("/orders")
         }
+    }
+
+    pub fn get_orders_with_status(&self,
+                                  open: bool,
+                                  pending: bool,
+                                  active: bool)
+        -> Result<Vec<OpenOrder>, Error>
+    {
+        let status = [open, pending, active].iter()
+                                            .zip(["status=open", "status=pending", "status=active"].iter())
+                                            .filter(|&(&flag, _)| flag)
+                                            .map(|(_, &s)| s)
+                                            .collect::<Vec<_>>()
+                                            .join("&");
+        self.get_and_decode(&format!("/orders?{}", status))
+    }
+
+    pub fn get_orders(&self) -> Result<Vec<OpenOrder>, Error> {
+        self.get_orders_with_status(true, true, true)
+    }
+
+    pub fn get_order(&self, order_id: OrderId) -> Result<Order, Error> {
+        self.get_and_decode(&format!("/order/{}", order_id))
     }
 }
