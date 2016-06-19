@@ -89,9 +89,9 @@ impl serde::Deserialize for EntryType {
 #[derive(Deserialize, Debug)]
 pub struct Hold {
     pub id: Uuid,
-    pub account_id: Uuid,
+    pub account_id: Option<Uuid>,
     pub created_at: DateTime<UTC>,
-    pub updated_at: DateTime<UTC>,
+    pub updated_at: Option<DateTime<UTC>>,
     pub amount: f64,
     #[serde(rename = "type")]
     pub hold_type: HoldType,

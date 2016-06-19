@@ -21,7 +21,7 @@ fn main() {
                  accounts[0].id,
                  private_client.get_account(accounts[0].id));
 
-        if let Some(btc_account) = accounts.iter().find(|&x| x.currency == "BTC") {
+        if let Some(btc_account) = accounts.iter().find(|&x| x.currency == "BTC" || x.currency == "ETH") {
             println!("Account History: {:?}", private_client.get_account_history(btc_account.id));
             println!("Account Holds: {:?}", private_client.get_account_holds(btc_account.id));
         }
@@ -41,9 +41,9 @@ fn main() {
 
     println!("All Open Orders: {:?}", private_client.get_orders());
 
-    println!("Bogus order: {:?}", private_client.get_order(Uuid::new_v4()));
+    //println!("Bogus order: {:?}", private_client.get_order(Uuid::new_v4()));
 
-    println!("Cancel bogus order: {:?}", private_client.cancel_order(Uuid::new_v4()));
+    //println!("Cancel bogus order: {:?}", private_client.cancel_order(Uuid::new_v4()));
 
-    println!("Cancel all orders: {:?}", private_client.cancel_all_orders(None));
+    //println!("Cancel all orders: {:?}", private_client.cancel_all_orders(None));
 }
