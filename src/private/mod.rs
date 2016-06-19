@@ -291,33 +291,33 @@ impl Serialize for NewOrder {
 
 #[derive(Deserialize, Debug)]
 pub struct OpenOrder {
-    id: OrderId,
-    size: f64,
-    price: f64,
-    product_id: String,
-    status: String,
-    filled_size: f64,
-    executed_value: f64,
-    fill_fees: f64,
-    settled: bool,
-    created_at: DateTime<UTC>
+    pub id: OrderId,
+    pub size: f64,
+    pub price: f64,
+    pub product_id: String,
+    pub status: String,
+    pub filled_size: f64,
+    pub executed_value: f64,
+    pub fill_fees: f64,
+    pub settled: bool,
+    pub created_at: DateTime<UTC>
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Order {
-    id: OrderId,
-    size: f64,
-    price: f64,
-    done_reason: String,
-    status: String,
-    settled: bool,
-    filled_size: f64,
-    executed_value: f64,
-    product_id: String,
-    fill_fees: f64,
-    side: Side,
-    created_at: DateTime<UTC>,
-    done_at: DateTime<UTC>
+    pub id: OrderId,
+    pub size: f64,
+    pub price: f64,
+    pub done_reason: String,
+    pub status: String,
+    pub settled: bool,
+    pub filled_size: f64,
+    pub executed_value: f64,
+    pub product_id: String,
+    pub fill_fees: f64,
+    pub side: Side,
+    pub created_at: DateTime<UTC>,
+    pub done_at: DateTime<UTC>
 }
 
 impl Client {
