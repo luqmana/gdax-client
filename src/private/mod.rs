@@ -300,6 +300,7 @@ pub struct OpenOrder {
     pub executed_value: f64,
     pub fill_fees: f64,
     pub settled: bool,
+    pub side: Side,
     pub created_at: DateTime<UTC>
 }
 
