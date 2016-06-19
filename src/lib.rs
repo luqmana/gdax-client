@@ -53,7 +53,7 @@ impl std::convert::From<serde_json::Error> for Error {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Side {
     Buy,
     Sell
