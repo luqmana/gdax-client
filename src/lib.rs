@@ -10,6 +10,8 @@ extern crate serde_json;
 extern crate time;
 extern crate uuid;
 
+use std::fmt;
+
 pub mod public;
 pub mod private;
 
@@ -55,6 +57,15 @@ impl std::convert::From<serde_json::Error> for Error {
 pub enum Side {
     Buy,
     Sell
+}
+
+impl fmt::Display for Side {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Side::Buy => write!(f, "Buy"),
+            Side::Sell => write!(f, "Sell")
+        }
+    }
 }
 
 // We manually implement Serialize for Side here
