@@ -309,7 +309,7 @@ pub struct Order {
     pub id: OrderId,
     pub size: f64,
     pub price: f64,
-    pub done_reason: String,
+    pub done_reason: Option<String>,
     pub status: String,
     pub settled: bool,
     pub filled_size: f64,
@@ -318,7 +318,7 @@ pub struct Order {
     pub fill_fees: f64,
     pub side: Side,
     pub created_at: DateTime<UTC>,
-    pub done_at: DateTime<UTC>
+    pub done_at: Option<DateTime<UTC>>
 }
 
 impl Client {
