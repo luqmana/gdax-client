@@ -465,6 +465,6 @@ impl Client {
     }
 
     pub fn get_order(&self, order_id: OrderId) -> Result<Order, Error> {
-        self.get_and_decode(&format!("/order/{}", order_id))
+        self.get_and_decode(&format!("/orders/{}", order_id))
     }
 }
