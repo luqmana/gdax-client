@@ -432,8 +432,11 @@ impl Client {
     }
 
     pub fn post_order(&self, order: &NewOrder) -> Result<OrderId, Error> {
+        #[derive(Deserialize)]
+        struct NewOrderResult { id: OrderId }
+
         let body = ser::to_string(order)?;
-        self.post_and_decode("/orders", &body)
+        Ok(self.post_and_decode::<NewOrderResult>("/orders", &body)?.id)
     }
 
     pub fn cancel_order(&self, order_id: OrderId) -> Result<(), Error> {
