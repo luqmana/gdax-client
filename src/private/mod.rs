@@ -440,7 +440,7 @@ impl Client {
     }
 
     pub fn cancel_order(&self, order_id: OrderId) -> Result<(), Error> {
-        self.delete_and_decode(&format!("/order/{}", order_id))
+        self.delete_and_decode(&format!("/orders/{}", order_id))
     }
 
     pub fn cancel_all_orders(&self, product_id: Option<&str>) -> Result<Vec<OrderId>, Error> {
