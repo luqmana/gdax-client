@@ -8,6 +8,7 @@ use hyper::header::{Accept, ContentType, Headers, qitem, UserAgent};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 use serde::{self, Deserialize, Serialize};
 use serde_json::{de, ser};
+use std::ops::Deref;
 use time::get_time;
 use uuid::Uuid;
 
@@ -17,6 +18,7 @@ use super::Side;
 const PRIVATE_API_URL: &'static str = "https://api.gdax.com";
 
 pub struct Client {
+    public_client: super::public::Client,
     http_client: HttpClient,
     key: String,
     secret: String,
@@ -324,6 +326,7 @@ pub struct Order {
 impl Client {
     pub fn new(key: &str, secret: &str, passphrase: &str) -> Client {
         Client {
+            public_client: super::public::Client::new(),
             http_client: HttpClient::new(),
             key: key.to_owned(),
             secret: secret.to_owned(),
@@ -466,5 +469,13 @@ impl Client {
 
     pub fn get_order(&self, order_id: OrderId) -> Result<Order, Error> {
         self.get_and_decode(&format!("/orders/{}", order_id))
+    }
+}
+
+impl Deref for Client {
+    type Target = super::public::Client;
+
+    fn deref(&self) -> &Self::Target {
+        &self.public_client
     }
 }
