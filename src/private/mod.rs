@@ -439,8 +439,8 @@ impl Client {
         Ok(self.post_and_decode::<NewOrderResult>("/orders", &body)?.id)
     }
 
-    pub fn cancel_order(&self, order_id: OrderId) -> Result<(), Error> {
-        self.delete_and_decode(&format!("/orders/{}", order_id))
+    pub fn cancel_order(&self, order_id: OrderId) -> Result<OrderId, Error> {
+        Ok(self.delete_and_decode::<Vec<OrderId>>(&format!("/orders/{}", order_id))?[0])
     }
 
     pub fn cancel_all_orders(&self, product_id: Option<&str>) -> Result<Vec<OrderId>, Error> {

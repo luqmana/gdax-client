@@ -27,23 +27,23 @@ fn main() {
         }
     }
 
-    let order = NewOrder::limit(Side::Buy, "BTC-CAD", 1.01, 1.01);
-    println!("Posting limit order: {:?} {:?}", order, private_client.post_order(&order));
+    //let order = NewOrder::limit(Side::Buy, "BTC-CAD", 1.01, 1.01);
+    //println!("Posting limit order: {:?} {:?}", order, private_client.post_order(&order));
 
-    let order = NewOrder::market(Side::Buy, "BTC-CAD", SizeOrFunds::Funds(10000.));
-    println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
+    //let order = NewOrder::market(Side::Buy, "BTC-CAD", SizeOrFunds::Funds(10000.));
+    //println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
 
-    let order = NewOrder::market(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1000.));
-    println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
+    //let order = NewOrder::market(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1000.));
+    //println!("Posting market order: {:?} {:?}", order, private_client.post_order(&order));
 
-    let order = NewOrder::stop(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1.01), 1.01);
-    println!("Posting stop order: {:?} {:?}", order, private_client.post_order(&order));
+    //let order = NewOrder::stop(Side::Buy, "BTC-CAD", SizeOrFunds::Size(1.01), 1.01);
+    //println!("Posting stop order: {:?} {:?}", order, private_client.post_order(&order));
 
     println!("All Open Orders: {:?}", private_client.get_orders());
 
     //println!("Bogus order: {:?}", private_client.get_order(Uuid::new_v4()));
 
-    //println!("Cancel bogus order: {:?}", private_client.cancel_order(Uuid::new_v4()));
+    println!("Cancel bogus order: {:?}", private_client.cancel_order(Uuid::new_v4()));
 
     //println!("Cancel all orders: {:?}", private_client.cancel_all_orders(None));
 }
